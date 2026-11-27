@@ -68,7 +68,26 @@ mvn test
 ```
 
 Тесты используют in-memory H2 со схемой и данными из `src/test/resources` и не требуют
-файла `transaction.mv.db`.
+файла `transaction.mv.db`: 15 тестов, включая сквозной вызов REST-метода через `TestRestTemplate`.
+
+## Проверка работы
+
+Для запуска без выданного файла БД есть тестовая схема и данные:
+
+```bash
+java -jar target/recommendation-service-0.1.0-SNAPSHOT.jar \
+  --spring.datasource.url=jdbc:h2:file:./runtime/transaction \
+  --spring.sql.init.mode=always \
+  --spring.sql.init.schema-locations=file:./src/test/resources/schema.sql \
+  --spring.sql.init.data-locations=file:./src/test/resources/data.sql
+
+curl http://localhost:8080/recommendation/cd515076-5d8a-44be-930e-8d4fcb79f42d
+```
+
+Проверено на пользователях из ТЗ: `cd515076-…-8d4fcb79f42d` → «Invest 500»,
+`d4a4d619-…-76c49409546b` → «Top Saving», `1f9b149c-…-16bea229b71a` → «Простой кредит»,
+несуществующий пользователь → `{"user_id":"…","recommendations":[]}`,
+некорректный UUID → `400 Bad Request`.
 
 ## Структура проекта
 
