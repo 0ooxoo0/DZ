@@ -39,3 +39,11 @@ build/
 ### Локальный Maven-репозиторий и скачанный тулчейн ###
 .m2repo/
 tools/
+
+### Служебные файлы, не относящиеся к проекту ###
+README.md
+.oc-data/
+ru-backup/
+oc-pool.ps1
+oc-tasks-probe.txt
+check-cleanup*.ps1
