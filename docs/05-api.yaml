@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Recommendation Service API — банк «Стар»
+  description: |
+    Сервис рекомендаций банковских продуктов. По идентификатору клиента возвращает список
+    продуктов, правила которых клиент удовлетворяет.
+
+    Правила первой итерации:
+      * Invest 500 — есть продукт DEBIT, нет продуктов INVEST, сумма пополнений по SAVING > 1000 ₽;
+      * Top Saving — есть продукт DEBIT, сумма пополнений по DEBIT ≥ 50 000 ₽ или по SAVING ≥ 50 000 ₽,
+        сумма пополнений по DEBIT больше суммы трат по DEBIT;
+      * Простой кредит — нет продуктов CREDIT, сумма пополнений по DEBIT больше суммы трат по DEBIT,
+        сумма трат по DEBIT > 100 000 ₽.
+  version: 0.1.0
+  contact:
+    name: Dmitriy
+    email: d.sherin@list.ru
+servers:
+  - url: http://localhost:8080
+    description: Локальный запуск
+paths:
+  /recommendation/{user_id}:
+    get:
+      summary: Получить рекомендации для клиента
+      operationId: getRecommendations
+      tags:
+        - recommendation
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Идентификатор пользователя в формате UUID
+          schema:
+            type: string
+            format: uuid
+          example: cd515076-5d8a-44be-930e-8d4fcb79f42d
+      responses:
+        '200':
+          description: Список рекомендаций; пустой массив, если ни одно правило не выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationResponse'
+              examples:
+                withRecommendations:
+                  summary: Клиент подходит под правила Invest 500
+                  value:
+                    user_id: cd515076-5d8a-44be-930e-8d4fcb79f42d
+                    recommendations:
+                      - name: Invest 500
+                        id: 147f6a0f-3b91-413b-ab99-87f081d60d5a
+                        text: Откройте свой путь к успеху с индивидуальным инвестиционным счетом (ИИС) от нашего банка!
+                empty:
+                  summary: Клиенту нечего предложить
+                  value:
+                    user_id: 00000000-0000-0000-0000-000000000004
+                    recommendations: []
+        '400':
+          description: Идентификатор пользователя не является корректным UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+components:
+  schemas:
+    RecommendationResponse:
+      type: object
+      required:
+        - user_id
+        - recommendations
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Идентификатор пользователя из запроса
+        recommendations:
+          type: array
+          description: Рекомендованные продукты; пустой массив, если рекомендаций нет
+          items:
+            $ref: '#/components/schemas/RecommendationDto'
+    RecommendationDto:
+      type: object
+      required:
+        - name
+        - id
+        - text
+      properties:
+        name:
+          type: string
+          description: Имя продукта
+          example: Invest 500
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор продукта
+          example: 147f6a0f-3b91-413b-ab99-87f081d60d5a
+        text:
+          type: string
+          description: Текстовое описание продукта
+    ApiError:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: Bad Request
+        path:
+          type: string
+          example: /recommendation/not-a-uuid
